@@ -32,7 +32,7 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 - **Après** TEMPS
 
 
-#### Amélioration de la méthode getReviews et donc de la méthode `METHOD` :
+#### Amélioration de la méthode getReviews et donc de la méthode `getReviews` :
 
 - **Avant** TEMPS
 
@@ -43,12 +43,12 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 - **Après** TEMPS
 
 ```sql
--- NOUVELLE REQ SQL
+-- 'SELECT meta_value FROM wp_usermeta WHERE user_id = :user_id AND meta_key = :meta_key' 
 ```
 
 
 
-#### Amélioration de la méthode `METHOD` :
+#### Amélioration de la méthode `getReviews` :
 
 - **Avant** TEMPS
 
@@ -59,7 +59,7 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 - **Après** TEMPS
 
 ```sql
--- NOUVELLE REQ SQL
+-- SELECT COUNT(meta_value) as cpt,Round(AVG(meta_value)) as moy FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review
 ```
 
 
