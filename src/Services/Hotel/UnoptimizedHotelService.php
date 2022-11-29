@@ -53,7 +53,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    */
   protected function getMeta ( int $userId, string $key ) : ?string {
     $db = $this->getDB();
-    $stmt = $db->prepare( "SELECT * FROM wp_usermeta" );
+    $stmt = $db->prepare( 'SELECT * FROM wp_usermeta WHERE user_id = :user_id AND meta_key = :meta_key' );
     $stmt->execute();
     
     $result = $stmt->fetchAll( PDO::FETCH_ASSOC );

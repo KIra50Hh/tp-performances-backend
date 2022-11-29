@@ -25,14 +25,14 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 ## Question 4 : Délégation des opérations de filtrage à la base de données
 
-**Temps de chargement globaux** 
+**Temps de chargement globaux** 15:01 29/11/2022
 
 - **Avant** TEMPS
 
 - **Après** TEMPS
 
 
-#### Amélioration de la méthode `METHOD` et donc de la méthode `METHOD` :
+#### Amélioration de la méthode getReviews et donc de la méthode `METHOD` :
 
 - **Avant** TEMPS
 
