@@ -7,6 +7,8 @@ use App\Common\SingletonTrait;
 use App\Entities\HotelEntity;
 use App\Entities\RoomEntity;
 use App\Services\Room\RoomService;
+use App\Common\Timers;
+use App\Common\PDOSingleton;
 use Exception;
 use PDO;
 
@@ -30,8 +32,14 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getDB () : PDO {
-    $pdo = new PDO( "mysql:host=db;dbname=tp;charset=utf8mb4", "root", "root" );
+    $timer = Timers::getInstance();
+    $timerId = $timer->startTimer('LoadDB');
+    $pdo = PDOSingleton::get();
+    $timer->endTimer('LoadDB', $timerId);
     return $pdo;
+    
+
+    
   }
   
   
@@ -225,7 +233,12 @@ class UnoptimizedHotelService extends AbstractHotelService {
       ->setName( $data['display_name'] );
     
     // Charge les données meta de l'hôtel
+    
+    $timer = Timers::getInstance();
+    $timerId = $timer->startTimer('loadHotelData');
     $metasData = $this->getMetas( $hotel );
+    $timer->endTimer('loadHotelData', $timerId);  
+
     $hotel->setAddress( $metasData['address'] );
     $hotel->setGeoLat( $metasData['geo_lat'] );
     $hotel->setGeoLng( $metasData['geo_lng'] );
@@ -233,13 +246,21 @@ class UnoptimizedHotelService extends AbstractHotelService {
     $hotel->setPhone( $metasData['phone'] );
     
     // Définit la note moyenne et le nombre d'avis de l'hôtel
+    $timer = Timers::getInstance();
+    $timerId = $timer->startTimer('loadReview');
     $reviewsData = $this->getReviews( $hotel );
+    $timer->endTimer('loadReview', $timerId);
     $hotel->setRating( $reviewsData['rating'] );
     $hotel->setRatingCount( $reviewsData['count'] );
     
     // Charge la chambre la moins chère de l'hôtel
+    $timer = Timers::getInstance();
+    $timerId = $timer->startTimer('loadHotel');
     $cheapestRoom = $this->getCheapestRoom( $hotel, $args );
+    $timer->endTimer('loadHotel', $timerId);
     $hotel->setCheapestRoom($cheapestRoom);
+
+    header('Server-Timing: ' . Timers::getInstance()->getTimers() );
     
     // Verification de la distance
     if ( isset( $args['lat'] ) && isset( $args['lng'] ) && isset( $args['distance'] ) ) {
