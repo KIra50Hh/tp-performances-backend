@@ -51,18 +51,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    *
    * @return string|null
    */
-  protected function getMeta ( int $userId, string $key ) : ?string {
-    $db = $this->getDB();
-    $stmt = $db->prepare( 'SELECT meta_value FROM wp_usermeta WHERE user_id = :user_id AND meta_key = :meta_key' );
-    $stmt->execute([
-      'user_id' => $userId,
-      'meta_key' => $key,
-    ]);
-    
-    $result = $stmt->fetch( PDO::FETCH_ASSOC );
-    
-    return $result['meta_value'] ?? null;
-  }
+ 
   
   
   /**
@@ -74,22 +63,94 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getMetas ( HotelEntity $hotel ) : array {
+    
+    $userId = $hotel->getId();
+    $db = $this->getDB();
+    $stmt = $db->prepare( "SELECT meta_value FROM wp_usermeta WHERE user_id = :userid AND meta_key = :key" );
+    $stmt->bindParam('userid',$userId,PDO::PARAM_INT);
+    $keys=[
+    'address_1',
+    'address_2',
+    'address_city',
+    'address_zip',
+    'address_country',
+    'geo_lat',
+    'geo_lng',
+    'coverImage',
+    'phone'];
+
     $metaDatas = [
       'address' => [
-        'address_1' => $this->getMeta( $hotel->getId(), 'address_1' ),
-        'address_2' => $this->getMeta( $hotel->getId(), 'address_2' ),
-        'address_city' => $this->getMeta( $hotel->getId(), 'address_city' ),
-        'address_zip' => $this->getMeta( $hotel->getId(), 'address_zip' ),
-        'address_country' => $this->getMeta( $hotel->getId(), 'address_country' ),
+        'address_1',
+        'address_2',
+        'address_city',
+        'address_zip',
+        'address_country',
       ],
-      'geo_lat' =>  $this->getMeta( $hotel->getId(), 'geo_lat' ),
-      'geo_lng' =>  $this->getMeta( $hotel->getId(), 'geo_lng' ),
-      'coverImage' =>  $this->getMeta( $hotel->getId(), 'coverImage' ),
-      'phone' =>  $this->getMeta( $hotel->getId(), 'phone' ),
+      'geo_lat',
+      'geo_lng',
+      'coverImage',
+      'phone',
     ];
-    
-    return $metaDatas;
+    foreach($keys as $key){
+      if($key == 'address_1'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['address']['address_1'] = $meta["meta_value"];
+      }
+      if($key == 'address_2'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['address']['address_2'] = $meta["meta_value"];
+      }
+      if($key == 'address_city'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['address']['address_city'] = $meta["meta_value"];
+      }
+      if($key == 'address_zip'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['address']['address_zip'] = $meta["meta_value"];
+      }
+      if($key == 'address_country'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['address']['address_country'] = $meta["meta_value"];
+      }
+      if($key == 'geo_lat'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['geo_lat'] = $meta["meta_value"];
+      }
+      if($key == 'geo_lng'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['geo_lng'] = $meta["meta_value"];
+      }
+      if($key == 'phone'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['phone'] = $meta["meta_value"];
+      }
+      if($key == 'coverImage'){
+        $stmt->bindParam('key',$key,PDO::PARAM_STR);
+        $stmt->execute();
+        $meta = $stmt->fetch( PDO::FETCH_ASSOC );
+        $metaDatas['coverImage'] = $meta["meta_value"];
+      }
   }
+  return $metaDatas;
+  "t'es une merde !";
+}
   
   
   /**
@@ -135,7 +196,6 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @return RoomEntity
    */
   protected function getCheapestRoom ( HotelEntity $hotel, array $args = [] ) : RoomEntity {
-
     $whereClause = [];
     if ( isset( $args['surface']['min'] )  )
       $whereClause[] = 'surfaceData.meta_value >= ' . $args['surface']['min'];
@@ -151,15 +211,17 @@ class UnoptimizedHotelService extends AbstractHotelService {
       $whereClause[] = 'bathRoomsData.meta_value >= ' . $args['bathRooms'];
     if ( isset( $args['types'] ) && ! empty( $args['types'] )  )
       $whereClause[] = 'typeData.meta_value IN ("' . implode( '","', $args['types'] ) . '")';
-    $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts 
-    INNER JOIN wp_postmeta as surfaceData ON surfaceData.post_id = wp_posts.ID AND surfaceData.meta_key = 'surface' 
-    INNER JOIN wp_postmeta as priceData ON priceData.post_id = wp_posts.ID AND priceData.meta_key = 'price'
-    INNER JOIN wp_postmeta as roomsData ON roomsData.post_id = wp_posts.ID AND roomsData.meta_key = 'bedrooms_count' 
-    INNER JOIN wp_postmeta as bathRoomsData ON bathRoomsData.post_id = wp_posts.ID AND bathRoomsData.meta_key = 'bathrooms_count'
-    INNER JOIN wp_postmeta as typeData ON typeData.post_id = wp_posts.ID AND typeData.meta_key = 'type'    
-    WHERE post_author = :hotelId AND post_type = 'room'" . ( ! empty( $whereClause ) ? ' AND ' . implode( ' AND ', $whereClause ) : '' ) . " ORDER BY priceData.meta_value ASC LIMIT 1" );
-    $stmt->execute( [ 'hotelId' => $hotel->getId() ] ); 
-    $filteredRooms = $stmt->fetchAll( PDO::FETCH_ASSOC );
+
+      $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts 
+      INNER JOIN wp_postmeta as surfaceData ON surfaceData.post_id = wp_posts.ID AND surfaceData.meta_key = 'surface' 
+      INNER JOIN wp_postmeta as priceData ON priceData.post_id = wp_posts.ID AND priceData.meta_key = 'price'
+      INNER JOIN wp_postmeta as roomsData ON roomsData.post_id = wp_posts.ID AND roomsData.meta_key = 'bedrooms_count' 
+      INNER JOIN wp_postmeta as bathRoomsData ON bathRoomsData.post_id = wp_posts.ID AND bathRoomsData.meta_key = 'bathrooms_count'
+      INNER JOIN wp_postmeta as typeData ON typeData.post_id = wp_posts.ID AND typeData.meta_key = 'type'    
+      WHERE post_author = :hotelId AND post_type = 'room'" . ( ! empty( $whereClause ) ? ' AND ' . implode( ' AND ', $whereClause ) : '' ) . " ORDER BY priceData.meta_value ASC LIMIT 1" );
+      $stmt->execute( [ 'hotelId' => $hotel->getId() ] ); 
+      $filteredRooms = $stmt->fetchAll( PDO::FETCH_ASSOC );
+    
     
     // Si aucune chambre ne correspond aux critères, alors on déclenche une exception pour retirer l'hôtel des résultats finaux de la méthode list().
     if ( count( $filteredRooms ) < 1 )
@@ -184,26 +246,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
     
     return $cheapestRoom;
   
-    // Si aucune chambre ne correspond aux critères, alors on déclenche une exception pour retirer l'hôtel des résultats finaux de la méthode list().
-    if ( count( $filteredRooms ) < 1 )
-      throw new FilterException( "Aucune chambre ne correspond aux critères" );
-    
-    
-    // Trouve le prix le plus bas dans les résultats de recherche
-    $cheapestRoom = null;
-    foreach ( $filteredRooms as $room ) :
-      if ( ! isset( $cheapestRoom ) ) {
-        $cheapestRoom = $room;
-        continue;
-      }
-      
-      if ( intval( $room->getPrice() ) < intval( $cheapestRoom->getPrice() ) )
-        $cheapestRoom = $room;
-    endforeach;
-    
-    return $cheapestRoom;
   }
-  
   
   /**
    * Calcule la distance entre deux coordonnées GPS
@@ -237,9 +280,9 @@ class UnoptimizedHotelService extends AbstractHotelService {
     // Charge les données meta de l'hôtel
     
     $timer = Timers::getInstance();
-    $timerId = $timer->startTimer('loadHotelData');
+    $timerId = $timer->startTimer('getmetas');
     $metasData = $this->getMetas( $hotel );
-    $timer->endTimer('loadHotelData', $timerId);  
+    $timer->endTimer('getmetas', $timerId);  
 
     $hotel->setAddress( $metasData['address'] );
     $hotel->setGeoLat( $metasData['geo_lat'] );
@@ -249,17 +292,17 @@ class UnoptimizedHotelService extends AbstractHotelService {
     
     // Définit la note moyenne et le nombre d'avis de l'hôtel
     $timer = Timers::getInstance();
-    $timerId = $timer->startTimer('loadReview');
+    $timerId = $timer->startTimer('getReview');
     $reviewsData = $this->getReviews( $hotel );
-    $timer->endTimer('loadReview', $timerId);
+    $timer->endTimer('getReview', $timerId);
     $hotel->setRating( $reviewsData['rating'] );
     $hotel->setRatingCount( $reviewsData['count'] );
     
     // Charge la chambre la moins chère de l'hôtel
     $timer = Timers::getInstance();
-    $timerId = $timer->startTimer('loadHotel');
+    $timerId = $timer->startTimer('getCheapestRoom');
     $cheapestRoom = $this->getCheapestRoom( $hotel, $args );
-    $timer->endTimer('loadHotel', $timerId);
+    $timer->endTimer('getCheapestRoom', $timerId);
     $hotel->setCheapestRoom($cheapestRoom);
 
     header('Server-Timing: ' . Timers::getInstance()->getTimers() );
