@@ -19,7 +19,6 @@ class UnoptimizedHotelService extends AbstractHotelService {
   
   use SingletonTrait;
   
-  
   protected function __construct () {
     parent::__construct( new RoomService() );
   }
@@ -149,7 +148,6 @@ class UnoptimizedHotelService extends AbstractHotelService {
       }
   }
   return $metaDatas;
-  "t'es une merde !";
 }
   
   
@@ -259,7 +257,8 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @return float|int
    */
   protected function computeDistance ( $latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo ) : float|int {
-    return ( 111.111 * rad2deg( acos( min( 1.0, cos( deg2rad( $latitudeTo ) )
+    return ( 111.111 
+          * rad2deg( acos( min( 1.0, cos( deg2rad( $latitudeTo ) )
           * cos( deg2rad( $latitudeFrom ) )
           * cos( deg2rad( $longitudeTo - $longitudeFrom ) )
           + sin( deg2rad( $latitudeTo ) )
